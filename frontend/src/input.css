@@ -1,0 +1,12 @@
+/* 
+ * Tailwind CSS entry file.
+ *
+ * This file initializes Tailwind's base styles, components, and utility classes.
+ * 
+ */
+
+@import "tailwindcss";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
