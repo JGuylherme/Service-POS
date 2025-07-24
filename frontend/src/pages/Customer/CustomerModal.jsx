@@ -20,7 +20,7 @@ export default function CustomerModal({
 }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const [phone_number, setPhoneNumber] = useState('');
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const modalRef = useRef(null);
@@ -30,7 +30,7 @@ export default function CustomerModal({
     if (isOpen) {
       setName(initialData?.name || '');
       setEmail(initialData?.email || '');
-      setPhone(initialData?.phone || '');
+      setPhoneNumber(initialData?.phone_number || '');
       setErrors({});
       setIsSubmitting(false);
       setTimeout(() => nameInputRef.current?.focus(), 50);
@@ -69,9 +69,9 @@ export default function CustomerModal({
   const validate = () => {
     const newErrors = {};
     if (!name.trim()) newErrors.name = 'Name is required';
-    if (!email.trim() && !phone.trim()) {
+    if (!email.trim() && !phone_number.trim()) {
       newErrors.email = 'Email or Phone is required';
-      newErrors.phone = 'Email or Phone is required';
+      newErrors.phone_number = 'Email or Phone is required';
     } else {
       if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         newErrors.email = 'Invalid email format';
@@ -85,7 +85,7 @@ export default function CustomerModal({
   const isFormValid = () => {
     return (
       name.trim() &&
-      (email.trim() || phone.trim()) &&
+      (email.trim() || phone_number.trim()) &&
       (!email.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
     );
   };
@@ -96,7 +96,7 @@ export default function CustomerModal({
 
     setIsSubmitting(true);
     setTimeout(() => {
-      onSubmit({ name: name.trim(), email: email.trim(), phone: phone.trim() });
+      onSubmit({ name: name.trim(), email: email.trim(), phone_number: phone_number.trim() });
       onClose();
     }, 400);
   };
@@ -135,6 +135,7 @@ export default function CustomerModal({
               id="name"
               ref={nameInputRef}
               type="text"
+              placeholder="John Doe"
               className={`w-full border rounded px-3 py-2 ${errors.name ? 'border-red-500' : 'border-gray-300'
                 }`}
               value={name}
@@ -151,6 +152,7 @@ export default function CustomerModal({
             <input
               id="email"
               type="email"
+              placeholder="example@email.com"
               className={`w-full border rounded px-3 py-2 ${errors.email ? 'border-red-500' : 'border-gray-300'
                 }`}
               value={email}
@@ -159,20 +161,23 @@ export default function CustomerModal({
             {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
           </div>
 
-          {/* Phone input */}
+          {/* Phone Number input */}
           <div className="mb-4">
-            <label className="block font-medium mb-1" htmlFor="phone">
+            <label className="block font-medium mb-1" htmlFor="phone_number">
               Phone
             </label>
             <input
-              id="phone"
+              id="phone_number"
               type="text"
-              className={`w-full border rounded px-3 py-2 ${errors.phone ? 'border-red-500' : 'border-gray-300'
+              placeholder="(123) 456-7890"
+              className={`w-full border rounded px-3 py-2 ${errors.phone_number ? 'border-red-500' : 'border-gray-300'
                 }`}
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              value={phone_number}
+              onChange={(e) => setPhoneNumber(e.target.value)}
             />
-            {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
+            {errors.phone_number && (
+              <p className="text-red-500 text-sm mt-1">{errors.phone_number}</p>
+            )}
           </div>
 
           {/* Buttons */}

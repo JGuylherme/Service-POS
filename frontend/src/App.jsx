@@ -17,7 +17,7 @@ import TimeTracking from './pages/TimeTracking';
  */
 export default function App() {
   return (
-    <div className="min-h-screen flex bg-gray-100">
+    <div className="min-h-screen flex overflow-x-hidden">
       {/* Sidebar navigation */}
       <Sidebar />
 

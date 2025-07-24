@@ -17,7 +17,7 @@ export default function CustomerRow({ customer, onEdit, onDelete }) {
       <td className="p-3 border border-gray-300">{customer.email}</td>
 
       {/* Phone */}
-      <td className="p-3 border border-gray-300">{customer.phone}</td>
+      <td className="p-3 border border-gray-300">{customer.phone_number || '-'}</td>
 
       {/* Actions */}
       <td className="p-3 border border-gray-300 inline-flex space-x-2">

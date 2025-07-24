@@ -5,31 +5,14 @@ import CustomerTable from './CustomerTable';
 import PaginationControls from './PaginationControls';
 import { useToast } from '../../components/ToastContext';
 
-const allDummyCustomers = [
-    { id: '1', name: 'Alice Johnson', email: 'alice@example.com', phone: '555-1234' },
-    { id: '2', name: 'Bob Smith', email: 'bob@example.com', phone: '555-5678' },
-    { id: '3', name: 'Carol Davis', email: 'carol@example.com', phone: '555-8765' },
-    { id: '4', name: 'David Lee', email: 'david@example.com', phone: '555-3456' },
-    { id: '5', name: 'Eva Green', email: 'eva@example.com', phone: '555-6543' },
-    { id: '6', name: 'Frank Wright', email: 'frank@example.com', phone: '555-9876' },
-    { id: '7', name: 'Grace Kim', email: 'grace@example.com', phone: '555-2345' },
-    { id: '8', name: 'Hank Miller', email: 'hank@example.com', phone: '555-7654' },
-    { id: '9', name: 'Ivy Carter', email: 'ivy@example.com', phone: '555-4321' },
-    { id: '10', name: 'Jack Wilson', email: 'jack@example.com', phone: '555-6789' },
-    { id: '11', name: 'Karen Taylor', email: 'karen@example.com', phone: '555-1122' },
-    { id: '12', name: 'Leo Martin', email: 'leo@example.com', phone: '555-3344' },
-    { id: '13', name: 'Mia Brown', email: 'mia@example.com', phone: '555-5566' },
-    { id: '14', name: 'Nina Clark', email: 'nina@example.com', phone: '555-7788' },
-    { id: '15', name: 'Owen Scott', email: 'owen@example.com', phone: '555-9900' },
-    { id: '16', name: 'Pamela Young', email: 'pamela@example.com', phone: '555-1010' },
-    { id: '17', name: 'Quinn Adams', email: 'quinn@example.com', phone: '555-2020' },
-    { id: '18', name: 'Rachel Evans', email: 'rachel@example.com', phone: '555-3030' },
-    { id: '19', name: 'Steve Hill', email: 'steve@example.com', phone: '555-4040' },
-    { id: '20', name: 'Tina Baker', email: 'tina@example.com', phone: '555-5050' },
-];
-
+/**
+ * Customers component - handles customer listing, filtering, sorting, pagination,
+ * and integration with backend for CRUD operations.
+ *
+ * @returns {JSX.Element} Customers page
+ */
 export default function Customers() {
-    const [customers, setCustomers] = useState(allDummyCustomers);
+    const [customers, setCustomers] = useState([]);
     const [showCount, setShowCount] = useState(5);
     const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
     const [filterName, setFilterName] = useState('');
@@ -38,9 +21,23 @@ export default function Customers() {
     const [currentPage, setCurrentPage] = useState(1);
 
     const { addToast } = useToast();
-
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingCustomer, setEditingCustomer] = useState(null);
+
+    useEffect(() => {
+        const fetchCustomers = async () => {
+            try {
+                const res = await fetch('http://localhost:3000/api/customers');
+                const data = await res.json();
+                setCustomers(data);
+            } catch (err) {
+                console.error('Failed to load customers:', err);
+                addToast({ message: 'Error fetching customers', type: 'error' });
+            }
+        };
+
+        fetchCustomers();
+    }, []);
 
     const toggleSort = (key) => {
         setSortConfig((current) => {
@@ -53,11 +50,11 @@ export default function Customers() {
     };
 
     const filteredCustomers = useMemo(() => {
-        return customers.filter(({ name, email, phone }) => {
+        return customers.filter(({ name, email, phone_number }) => {
             return (
                 name.toLowerCase().includes(filterName.toLowerCase()) &&
-                email.toLowerCase().includes(filterEmail.toLowerCase()) &&
-                phone.toLowerCase().includes(filterPhone.toLowerCase())
+                (email || '').toLowerCase().includes(filterEmail.toLowerCase()) &&
+                (phone_number || '').toLowerCase().includes(filterPhone.toLowerCase())
             );
         });
     }, [customers, filterName, filterEmail, filterPhone]);
@@ -65,8 +62,8 @@ export default function Customers() {
     const sortedCustomers = useMemo(() => {
         if (!sortConfig.key) return filteredCustomers;
         return [...filteredCustomers].sort((a, b) => {
-            const valA = a[sortConfig.key].toLowerCase();
-            const valB = b[sortConfig.key].toLowerCase();
+            const valA = (a[sortConfig.key] || '').toLowerCase();
+            const valB = (b[sortConfig.key] || '').toLowerCase();
             if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
             if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
             return 0;
@@ -93,28 +90,60 @@ export default function Customers() {
         setIsModalOpen(true);
     };
 
+    /**
+     * Opens the modal to edit an existing customer.
+     *
+     * @param {Object} customer - Customer to edit.
+     */
     const openEditModal = (customer) => {
         setEditingCustomer(customer);
         setIsModalOpen(true);
     };
 
-    const handleDelete = (customerId) => {
-        setCustomers((prev) => prev.filter((c) => c.id !== customerId));
-        addToast({ message: 'Customer deleted successfully', type: 'success' });
+    const handleDelete = async (customerId) => {
+        try {
+            await fetch(`/api/customers/${customerId}`, { method: 'DELETE' });
+            setCustomers((prev) => prev.filter((c) => c.id !== customerId));
+            addToast({ message: 'Customer deleted successfully', type: 'success' });
+        } catch (err) {
+            addToast({ message: 'Failed to delete customer', type: 'error' });
+        }
     };
 
-    const handleModalSubmit = (customerData) => {
-        if (editingCustomer) {
-            setCustomers((prev) =>
-                prev.map((c) => (c.id === editingCustomer.id ? { ...c, ...customerData } : c))
-            );
-            addToast({ message: 'Customer updated successfully', type: 'success' });
-        } else {
-            setCustomers((prev) => [...prev, { id: String(Date.now()), ...customerData }]);
-            addToast({ message: 'Customer added successfully', type: 'success' });
+    const handleModalSubmit = async (customerData) => {
+        try {
+            if (editingCustomer) {
+                await fetch(`/api/customers/${editingCustomer.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(customerData),
+                });
+
+                setCustomers((prev) =>
+                    prev.map((c) =>
+                        c.id === editingCustomer.id ? { ...c, ...customerData } : c
+                    )
+                );
+
+                addToast({ message: 'Customer updated successfully', type: 'success' });
+            } else {
+                const res = await fetch('/api/customers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(customerData),
+                });
+
+                const { id } = await res.json();
+
+                setCustomers((prev) => [...prev, { id, ...customerData }]);
+                addToast({ message: 'Customer added successfully', type: 'success' });
+            }
+
+            setIsModalOpen(false);
+            setCurrentPage(1);
+        } catch (err) {
+            addToast({ message: 'Failed to save customer', type: 'error' });
         }
-        setIsModalOpen(false);
-        setCurrentPage(1);
     };
 
     return (
